@@ -1,7 +1,6 @@
 import argparse
 
 import colorcet as cc
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -23,9 +22,11 @@ from bokeh.models import (
 )
 from bokeh.plotting import curdoc, figure
 from bokeh.transform import factor_cmap
-from matplotlib.colors import SymLogNorm
 
+from xpick.app.processing import load_signal, normalize_signal, process_signal
 from xpick.app.pickertool import PickerTool
+
+# parse arguments
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--path")
@@ -33,23 +34,30 @@ parser.add_argument("--width", type=int)
 parser.add_argument("--height", type=int)
 args = parser.parse_args()
 
+
 # global constants
+
 palette_mapping = ["Viridis256", cc.CET_D1A]
 phase_labels = ["Pp", "Ps", "Ss"]
 phase_cmap = factor_cmap(
     field_name="phase", palette=["#7F0DFF", "#BF0DFF", "#FF00FF"], factors=phase_labels
 )
 
+
 # global variables
+
 db = xdas.open_database(args.path)
 x_range = Range1d()
 y_range = Range1d()
 source_image = ColumnDataSource(data=dict(image=[], x=[], y=[], dw=[], dh=[]))
 source_picks = ColumnDataSource(data=dict(time=[], distance=[], phase=[], status=[]))
+phase = RadioButtonGroup(labels=phase_labels, active=0, width=330)
+signal = xr.DataArray()
+image = xr.DataArray()
 
 
-# layout
-doc = curdoc()
+# figure
+
 fig = figure(
     width=args.width,
     height=args.height,
@@ -72,20 +80,11 @@ crc = fig.circle(
     size=3,
     color=phase_cmap,
 )
-
-slider = Slider(start=1, end=50, value=3, step=1, title="Marker Size", width=330)
-slider_callback = CustomJS(
-    args=dict(circle=crc, slider=slider),
-    code="""
-    circle.glyph.size = slider.value;
-""",
-)
-slider.js_on_change("value", slider_callback)
-
 fig.add_tools(LassoSelectTool())
-phase = RadioButtonGroup(labels=phase_labels, active=0, width=330)
 fig.add_tools(PickerTool(source=source_picks, phase=phase))
 
+
+# widgets
 
 selection = {
     "starttime": TextInput(title="Start", value="2021-11-13T01:41:00", width=160),
@@ -105,79 +104,65 @@ processing = {
         "highpass": TextInput(title="Highpass", value="", width=75),
     },
 }
+b_apply = Button(label="apply", button_type="success", width=160)
+b_home = Button(label="home", button_type="primary", width=160)
 mapper = {
     "palette": RadioButtonGroup(labels=["viridis", "seismic"], active=0, width=160),
     "linthresh": TextInput(title="Linear Threshold", value="1e-8", width=160),
     "vlim": TextInput(title="Value Limit", value="1e-5", width=160),
 }
-fname = TextInput(title="Path", width=330)
+b_mapper = Button(label="apply", button_type="success", width=160)
+slider = Slider(start=1, end=50, value=3, step=1, title="Marker Size", width=330)
+path = TextInput(title="Path", width=330)
+b_delete = Button(label="delete", button_type="warning", width=75)
+b_save = Button(label="save", button_type="success", width=75)
+b_load = Button(label="load", button_type="primary", width=75)
+b_reset = Button(label="reset", button_type="danger", width=75)
+
+
+slider_callback = CustomJS(
+    args=dict(circle=crc, slider=slider),
+    code="""
+    circle.glyph.size = slider.value;
+""",
+)
+slider.js_on_change("value", slider_callback)
 
 
 # callbacks
-def load_signal(db, selection):
-    print("Loading signal... ", end="")
-    # load
-    signal = db.sel(
-        time=slice(
-            selection["starttime"].value,
-            selection["endtime"].value,
-        ),
-        distance=slice(
-            float(selection["startdistance"].value),
-            float(selection["enddistance"].value),
-        ),
-    ).to_xarray()
-    print("Done.")
-    return signal
 
 
-def process_signal(signal, processing):
-    print("Processing signal... ", end="")
-    # distance
-    if processing["space"]["integration"].active:
-        signal = xp.integrate(signal, dim="distance")
-    if q := processing["space"]["decimation"].value:
-        signal = xp.decimate(
-            signal, int(q), ftype="fir", zero_phase=True, dim="distance"
-        )
-    if wlen := processing["space"]["highpass"].value:
-        signal = xp.sliding_mean_removal(signal, wlen=float(wlen))
-    # time
-    if processing["time"]["integration"].active:
-        signal = xp.integrate(signal, dim="time")
-    if q := processing["time"]["decimation"].value:
-        signal = xp.decimate(signal, int(q), ftype="iir", zero_phase=False, dim="time")
-    if freq := processing["time"]["highpass"].value:
-        signal = xp.iirfilter(signal, freq=float(freq), btype="highpass")
-    # gain
-    signal *= 1.08e-7
-    print("Done.")
-    return signal
-
-
-def update_image():
+def callback():
+    global signal, image
     signal = load_signal(db, selection)
     signal = process_signal(signal, processing)
+    image = normalize_signal(signal, mapper)
+    update_image(image)
+    update_palette()
+    update_range()
+
+
+b_apply.on_click(callback)
+
+
+def update_image(image):
     print("Updating image... ", end="")
-    norm = SymLogNorm(
-        linthresh=float(mapper["linthresh"].value),
-        vmin=-float(mapper["vlim"].value),
-        vmax=float(mapper["vlim"].value),
-    )
-    image = norm(signal.values).data
-    t0 = signal["time"][0].values
-    s0 = signal["distance"][0].values
-    L = signal["distance"][-1].values - signal["distance"][0].values
-    T = signal["time"][-1].values - signal["time"][0].values
-    dt = xp.get_sampling_interval(signal, "time")
+    t0 = image["time"][0].values
+    s0 = image["distance"][0].values
+    L = image["distance"][-1].values - image["distance"][0].values
+    T = image["time"][-1].values - image["time"][0].values
+    dt = xp.get_sampling_interval(image, "time")
     dt = np.timedelta64(round(1e9 * dt), "ns")
-    ds = xp.get_sampling_interval(signal, "distance")
+    ds = xp.get_sampling_interval(image, "distance")
     x = s0 - ds / 2
     y = t0 - dt / 2
     dw = L + ds
     dh = T + dt
-    source_image.data = dict(image=[image], x=[x], y=[y], dw=[dw], dh=[dh])
+    source_image.data = dict(image=[image.data], x=[x], y=[y], dw=[dw], dh=[dh])
     print("Done.")
+
+
+b_mapper.on_click(lambda: update_image(normalize_signal(signal, mapper)))
 
 
 def update_palette():
@@ -201,37 +186,33 @@ def update_range():
     print("Done.")
 
 
+b_home.on_click(update_range)
+
+
 def save_picks():
     print("Saving picks... ", end="")
     picks = pd.DataFrame(source_picks.data)
     picks["time"] = pd.to_datetime(picks["time"], unit="ms")
     picks = picks.sort_values("time")
     picks = picks.drop(columns=["status"])
-    picks.to_csv(fname.value, index=False)
+    picks.to_csv(path.value, index=False)
     print("Done.")
+
+
+b_save.on_click(save_picks)
 
 
 def load_picks():
     print("Loading picks... ", end="")
-    picks = pd.read_csv(fname.value, parse_dates=["time"])
+    picks = pd.read_csv(path.value, parse_dates=["time"])
     picks["status"] = "inactive"
     source_picks.data = picks.to_dict("list")
     print("Done.")
 
 
-def reset_picks():
-    print("Resetting picks... ", end="")
-    source_picks.data = dict(time=[], distance=[], phase=[])
-    print("Done.")
+b_load.on_click(load_picks)
 
 
-def callback():
-    update_image()
-    update_palette()
-    update_range()
-
-
-# Define a CustomJS callback to handle point deletion
 delete_selection = CustomJS(
     args=dict(source=source_picks),
     code="""
@@ -255,21 +236,22 @@ delete_selection = CustomJS(
 """,
 )
 
-b_delete = Button(label="delete", button_type="warning", width=75)
 b_delete.js_on_click(delete_selection)
-b_apply = Button(label="apply", button_type="success", width=160)
-b_apply.on_click(callback)
-b_home = Button(label="home", button_type="primary", width=160)
-b_home.on_click(update_range)
-b_mapper = Button(label="apply", button_type="success", width=160)
-b_mapper.on_click(update_image)
-b_save = Button(label="save", button_type="success", width=75)
-b_save.on_click(save_picks)
-b_load = Button(label="load", button_type="primary", width=75)
-b_load.on_click(load_picks)
-b_reset = Button(label="reset", button_type="danger", width=75)
+
+
+def reset_picks():
+    print("Resetting picks... ", end="")
+    source_picks.data = dict(time=[], distance=[], phase=[])
+    print("Done.")
+
+
 b_reset.on_click(reset_picks)
 
+
+# layout
+
+doc = curdoc()
+doc.title = "xpick"
 doc.add_root(
     row(
         fig,
@@ -303,7 +285,7 @@ doc.add_root(
             Div(text="<h2 style='margin: 0'>Picks</h2>"),
             phase,
             slider,
-            fname,
+            path,
             row(b_save, b_load, b_delete, b_reset),
         ),
     )
