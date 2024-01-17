@@ -2,7 +2,7 @@ import argparse
 import importlib.resources
 import subprocess
 
-path = str(importlib.resources.files("xpick") / "app.py")
+path = str(importlib.resources.files("xpick") / "app")
 
 
 def main():

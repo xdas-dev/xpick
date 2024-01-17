@@ -23,7 +23,7 @@ from bokeh.models import (
 from bokeh.plotting import curdoc, figure
 from bokeh.transform import factor_cmap
 from matplotlib.colors import SymLogNorm
-from pickertool import PickerTool
+from xpick.app.pickertool import PickerTool
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--path")
@@ -49,6 +49,7 @@ source_picks = ColumnDataSource(data=dict(time=[], distance=[], phase=[], status
 # layout
 doc = curdoc()
 fig = figure(
+    name="xpick",
     width=args.width,
     height=args.height,
     y_axis_type="datetime",
