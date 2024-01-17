@@ -30,14 +30,14 @@ parser.add_argument("--path")
 args = parser.parse_args()
 
 # global constants
-db = xdas.open_database(args.path)
+palette_mapping = ["Viridis256", cc.CET_D1A]
 phases = ["Pp", "Ps", "Ss"]
-image_mapper = LinearColorMapper(palette="Viridis256", low=0, high=1)
 phase_cmap = factor_cmap(
     field_name="phase", palette=["#7F0DFF", "#BF0DFF", "#FF00FF"], factors=phases
 )
 
 # global variables
+db = xdas.open_database(args.path)
 range_x = Range1d()
 range_y = Range1d()
 source_image = ColumnDataSource(data=dict(image=[], x=[], y=[], dw=[], dh=[]))
@@ -60,7 +60,6 @@ img = fig.image(
     y="y",
     dw="dw",
     dh="dh",
-    color_mapper=image_mapper,
 )
 crc = fig.circle(
     source=source_picks,
@@ -74,8 +73,6 @@ fig.add_tools(LassoSelectTool())
 for phase in phases:
     fig.add_tools(PickerTool(source=source_picks, phase=phase))
 
-
-palette_mapping = ["Viridis256", cc.CET_D1A]
 
 selection = {
     "starttime": TextInput(title="starttime", value="2021-11-13T01:40:55"),
@@ -123,7 +120,9 @@ def update_signal():
     if processing["space"]["integration"].active:
         signal = xp.integrate(signal, dim="distance")
     if q := processing["space"]["decimation"].value:
-        signal = xp.decimate(signal, int(q), ftype="fir", zero_phase=True, dim="distance")
+        signal = xp.decimate(
+            signal, int(q), ftype="fir", zero_phase=True, dim="distance"
+        )
     if wlen := processing["space"]["mean_removal"].value:
         signal = xp.sliding_mean_removal(signal, wlen=float(wlen))
     # time
@@ -158,13 +157,13 @@ def update_image():
     source_image.data = dict(image=[image], x=[x], y=[y], dw=[dw], dh=[dh])
 
 
-def update_palette(attr, old, new):
+def update_palette():
     palette = palette_mapping[mapper["palette"].active]
     image_mapper = LinearColorMapper(palette=palette, low=0, high=1)
     img.glyph.color_mapper = image_mapper
 
 
-mapper["palette"].on_change("active", update_palette)
+mapper["palette"].on_change("active", lambda attr, old, new: update_palette())
 
 
 def update_range():
@@ -195,15 +194,10 @@ def reset_picks():
     source_picks.data = dict(time=[], distance=[], phase=[])
 
 
-# initialize
-# update_signal()
-# update_image()
-# update_range()
-
-
 def callback():
     update_signal()
     update_image()
+    update_palette()
     update_range()
 
 
