@@ -1,5 +1,6 @@
 import { GestureTool, GestureToolView } from "models/tools/gestures/gesture_tool";
 import { ColumnDataSource } from "models/sources/column_data_source";
+import { RadioButtonGroup } from "models/widgets/radio_button_group";
 import { PanEvent } from "core/ui_events";
 import * as p from "core/properties";
 
@@ -24,7 +25,7 @@ export class PickerToolView extends GestureToolView {
     const { source } = this.model;
     source.get_array("distance").push(x);
     source.get_array("time").push(y);
-    source.get_array("phase").push(this.model.phase);
+    source.get_array("phase").push(this.model.phase.labels[this.model.phase.active as number]);
     source.get_array("status").push("active");
     source.change.emit();
   }
@@ -57,9 +58,9 @@ export class PickerToolView extends GestureToolView {
       if (!(
         xmin <= distance[i] &&
         distance[i] <= xmax &&
-        phase[i] === this.model.phase &&
+        phase[i] === this.model.phase.labels[this.model.phase.active as number] &&
         status[i] === "inactive"
-        )) {
+      )) {
         data.distance.push(distance[i]);
         data.time.push(time[i]);
         data.phase.push(phase[i]);
@@ -76,11 +77,11 @@ export namespace PickerTool {
 
   export type Props = GestureTool.Props & {
     source: p.Property<ColumnDataSource>;
-    phase: p.Property<string>;
+    phase: p.Property<RadioButtonGroup>;
   };
 }
 
-export interface PickerTool extends PickerTool.Attrs {}
+export interface PickerTool extends PickerTool.Attrs { }
 
 export class PickerTool extends GestureTool {
   declare properties: PickerTool.Props;
@@ -93,9 +94,9 @@ export class PickerTool extends GestureTool {
   static {
     this.prototype.default_view = PickerToolView;
 
-    this.define<PickerTool.Props>(({ Ref, String }) => ({
+    this.define<PickerTool.Props>(({ Ref }) => ({
       source: [Ref(ColumnDataSource)],
-      phase: [String],
+      phase: [Ref(RadioButtonGroup)],
     }));
   }
 

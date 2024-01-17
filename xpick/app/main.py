@@ -35,9 +35,9 @@ args = parser.parse_args()
 
 # global constants
 palette_mapping = ["Viridis256", cc.CET_D1A]
-phases = ["Pp", "Ps", "Ss"]
+phase_labels = ["Pp", "Ps", "Ss"]
 phase_cmap = factor_cmap(
-    field_name="phase", palette=["#7F0DFF", "#BF0DFF", "#FF00FF"], factors=phases
+    field_name="phase", palette=["#7F0DFF", "#BF0DFF", "#FF00FF"], factors=phase_labels
 )
 
 # global variables
@@ -73,7 +73,7 @@ crc = fig.circle(
     color=phase_cmap,
 )
 
-slider = Slider(start=1, end=50, value=2, step=1, title="Marker Size", width=330)
+slider = Slider(start=1, end=50, value=3, step=1, title="Marker Size", width=330)
 slider_callback = CustomJS(
     args=dict(circle=crc, slider=slider),
     code="""
@@ -83,8 +83,8 @@ slider_callback = CustomJS(
 slider.js_on_change("value", slider_callback)
 
 fig.add_tools(LassoSelectTool())
-for phase in phases:
-    fig.add_tools(PickerTool(source=source_picks, phase=phase))
+phase = RadioButtonGroup(labels=phase_labels, active=0, width=330)
+fig.add_tools(PickerTool(source=source_picks, phase=phase))
 
 
 selection = {
@@ -301,6 +301,7 @@ doc.add_root(
             row(mapper["linthresh"], mapper["vlim"]),
             row(b_mapper, mapper["palette"]),
             Div(text="<h2 style='margin: 0'>Picks</h2>"),
+            phase,
             slider,
             fname,
             row(b_save, b_load, b_delete, b_reset),
