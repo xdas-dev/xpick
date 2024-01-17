@@ -184,11 +184,11 @@ def save_picks():
     picks["time"] = pd.to_datetime(picks["time"], unit="ms")
     picks = picks.sort_values("time")
     picks = picks.drop(columns=["status"])
-    picks.to_csv("data/" + fname.value, index=False)
+    picks.to_csv(fname.value, index=False)
 
 
 def load_picks():
-    picks = pd.read_csv("data/" + fname.value, parse_dates=["time"])
+    picks = pd.read_csv(fname.value, parse_dates=["time"])
     picks["status"] = "inactive"
     source_picks.data = picks.to_dict("list")
 
