@@ -112,7 +112,7 @@ mapper = {
     "vlim": TextInput(title="Value Limit", value="1e-5", width=160),
 }
 b_mapper = Button(label="apply", button_type="success", width=160)
-slider = Slider(start=1, end=50, value=3, step=1, title="Marker Size", width=330)
+slider = Slider(start=1, end=10, value=3, step=1, title="Marker Size", width=330)
 path = TextInput(title="Path", width=330)
 b_delete = Button(label="delete", button_type="warning", width=75)
 b_save = Button(label="save", button_type="success", width=75)

@@ -6,7 +6,14 @@ path = str(importlib.resources.files("xpick") / "app")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="A picking tool for DAS.")
+    parser = argparse.ArgumentParser(
+        description="""
+        A picking tool for DAS.
+        
+        Not recognized options will passed to 'bokeh serve' (such as --port, --dev or 
+        --show)
+        """
+    )
     parser.add_argument("path", help="Path of the database to explore.")
     parser.add_argument(
         "--width", help="Width of the image in pixels.", type=int, default=1080

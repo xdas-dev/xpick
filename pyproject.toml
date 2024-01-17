@@ -14,7 +14,7 @@ dependencies = ["bokeh", "matplotlib", "numpy", "pandas", "xarray", "xdas"]
 dev = ["black", "isort", "pytest"]
 
 [project.scripts]
-cli = "xpick.__main__:main"
+xpick = "xpick.__main__:main"
 
 [tool.isort]
 profile = "black"

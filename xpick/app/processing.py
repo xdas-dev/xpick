@@ -53,6 +53,3 @@ def normalize_signal(signal, mapper):
     image = signal.copy(data=norm(signal.values).data)
     print("Done.")
     return image
-
-
-
