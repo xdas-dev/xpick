@@ -69,7 +69,7 @@ crc = fig.circle(
     source=source_picks,
     x="distance",
     y="time",
-    size=1,
+    size=3,
     color=phase_cmap,
 )
 
