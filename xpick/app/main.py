@@ -16,7 +16,6 @@ from bokeh.models import (
     LassoSelectTool,
     LinearColorMapper,
     RadioButtonGroup,
-    Range1d,
     TextInput,
     Toggle,
 )
@@ -100,6 +99,7 @@ fname = TextInput(title="Path", value="picks.csv", width=330)
 
 # callbacks
 def load_signal(db, selection):
+    print("Loading signal... ", end="")
     # load
     signal = db.sel(
         time=slice(
@@ -111,10 +111,12 @@ def load_signal(db, selection):
             float(selection["enddistance"].value),
         ),
     ).to_xarray()
+    print("Done.")
     return signal
 
 
 def process_signal(signal, processing):
+    print("Processing signal... ", end="")
     # distance
     if processing["space"]["integration"].active:
         signal = xp.integrate(signal, dim="distance")
@@ -133,12 +135,14 @@ def process_signal(signal, processing):
         signal = xp.iirfilter(signal, freq=float(freq), btype="highpass")
     # gain
     signal *= 1.08e-7
+    print("Done.")
     return signal
 
 
 def update_image():
     signal = load_signal(db, selection)
     signal = process_signal(signal, processing)
+    print("Updating image... ", end="")
     norm = SymLogNorm(
         linthresh=float(mapper["linthresh"].value),
         vmin=-float(mapper["vlim"].value),
@@ -157,41 +161,52 @@ def update_image():
     dw = L + ds
     dh = T + dt
     source_image.data = dict(image=[image], x=[x], y=[y], dw=[dw], dh=[dh])
+    print("Done.")
 
 
 def update_palette():
+    print("Updating palette... ", end="")
     palette = palette_mapping[mapper["palette"].active]
     image_mapper = LinearColorMapper(palette=palette, low=0, high=1)
     img.glyph.color_mapper = image_mapper
+    print("Done.")
 
 
 mapper["palette"].on_change("active", lambda attr, old, new: update_palette())
 
 
 def update_range():
+    print("Updating range... ", end="")
     x, y, dw, dh = [source_image.data[key][0] for key in ["x", "y", "dw", "dh"]]
     fig.x_range.start = x
     fig.x_range.end = x + dw
     fig.y_range.start = y + dh
     fig.y_range.end = y
+    print("Done.")
 
 
 def save_picks():
+    print("Saving picks... ", end="")
     picks = pd.DataFrame(source_picks.data)
     picks["time"] = pd.to_datetime(picks["time"], unit="ms")
     picks = picks.sort_values("time")
     picks = picks.drop(columns=["status"])
     picks.to_csv(fname.value, index=False)
+    print("Done.")
 
 
 def load_picks():
+    print("Loading picks... ", end="")
     picks = pd.read_csv(fname.value, parse_dates=["time"])
     picks["status"] = "inactive"
     source_picks.data = picks.to_dict("list")
+    print("Done.")
 
 
 def reset_picks():
+    print("Resetting picks... ", end="")
     source_picks.data = dict(time=[], distance=[], phase=[])
+    print("Done.")
 
 
 def callback():
