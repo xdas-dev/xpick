@@ -16,6 +16,7 @@ from bokeh.models import (
     LassoSelectTool,
     LinearColorMapper,
     RadioButtonGroup,
+    Range1d,
     TextInput,
     Toggle,
 )
@@ -39,6 +40,8 @@ phase_cmap = factor_cmap(
 
 # global variables
 db = xdas.open_database(args.path)
+x_range = Range1d()
+y_range = Range1d()
 source_image = ColumnDataSource(data=dict(image=[], x=[], y=[], dw=[], dh=[]))
 source_picks = ColumnDataSource(data=dict(time=[], distance=[], phase=[], status=[]))
 
@@ -49,6 +52,8 @@ fig = figure(
     width=args.width,
     height=args.height,
     y_axis_type="datetime",
+    x_range=x_range,
+    y_range=y_range,
 )
 img = fig.image(
     source=source_image,
@@ -178,10 +183,10 @@ mapper["palette"].on_change("active", lambda attr, old, new: update_palette())
 def update_range():
     print("Updating range... ", end="")
     x, y, dw, dh = [source_image.data[key][0] for key in ["x", "y", "dw", "dh"]]
-    fig.x_range.start = x
-    fig.x_range.end = x + dw
-    fig.y_range.start = y + dh
-    fig.y_range.end = y
+    x_range.start = x
+    x_range.end = x + dw
+    y_range.start = y + dh
+    y_range.end = y
     print("Done.")
 
 
