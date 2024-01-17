@@ -122,9 +122,6 @@ def update_signal():
 
 
 def update_image():
-    palette = palette_mapping[mapper["palette"].active]
-    image_mapper = LinearColorMapper(palette=palette, low=0, high=1)
-    img.glyph.color_mapper = image_mapper
     norm = SymLogNorm(
         linthresh=float(mapper["linthresh"].value),
         vmin=-float(mapper["vlim"].value),
@@ -143,6 +140,15 @@ def update_image():
     dw = L + ds
     dh = T + dt
     source_image.data = dict(image=[image], x=[x], y=[y], dw=[dw], dh=[dh])
+
+
+def update_palette(attr, old, new):
+    palette = palette_mapping[mapper["palette"].active]
+    image_mapper = LinearColorMapper(palette=palette, low=0, high=1)
+    img.glyph.color_mapper = image_mapper
+
+
+mapper["palette"].on_change("active", update_palette)
 
 
 def update_range():
