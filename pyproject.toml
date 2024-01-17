@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xpick"
+version = "0.1.0"
+authors = [
+    { name = "Alister Trabattoni", email = "alister.trabattoni@gmail.com" },
+]
+dependencies = ["bokeh", "matplotlib", "numpy", "pandas", "xarray", "xdas"]
+
+[project.optional-dependencies]
+dev = ["black", "isort", "pytest"]
+
+[project.scripts]
+cli = "xpick.__main__:main"
+
+[tool.isort]
+profile = "black"
+
