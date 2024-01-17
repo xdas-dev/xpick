@@ -78,29 +78,29 @@ for phase in phases:
 
 
 selection = {
-    "starttime": TextInput(title="starttime", value="2021-11-13T01:40:55", width=160),
-    "endtime": TextInput(title="endtime", value="2021-11-13T01:41:15", width=160),
-    "startdistance": TextInput(title="startdistance", value="15_000.0", width=160),
-    "enddistance": TextInput(title="enddistance", value="125_000.0", width=160),
+    "starttime": TextInput(title="Start", value="2021-11-13T01:40:55", width=160),
+    "endtime": TextInput(title="End", value="2021-11-13T01:41:15", width=160),
+    "startdistance": TextInput(title="Start", value="15_000.0", width=160),
+    "enddistance": TextInput(title="End", value="125_000.0", width=160),
 }
 processing = {
     "space": {
-        "integration": Toggle(label="Integrate"),
-        "decimation": TextInput(title="Decimate", value="", width=160),
-        "mean_removal": TextInput(title="Mean Removal", value="", width=160),
+        "integration": Toggle(label="Integrate", width=160),
+        "decimation": TextInput(title="Decimate", value="", width=75),
+        "highpass": TextInput(title="Highpass", value="", width=75),
     },
     "time": {
-        "integration": Toggle(label="Integrate"),
-        "decimation": TextInput(title="Decimate", value="", width=160),
-        "highpass": TextInput(title="Highpass", value="", width=160),
+        "integration": Toggle(label="Integrate", width=160),
+        "decimation": TextInput(title="Decimate", value="", width=75),
+        "highpass": TextInput(title="Highpass", value="", width=75),
     },
 }
 mapper = {
-    "palette": RadioButtonGroup(labels=["viridis", "seismic"], active=0),
-    "linthresh": TextInput(title="linthresh", value="1e-8", width=160),
-    "vlim": TextInput(title="vlim", value="1e-5", width=160),
+    "palette": RadioButtonGroup(labels=["viridis", "seismic"], active=0, width=160),
+    "linthresh": TextInput(title="Linear Threshold", value="1e-8", width=160),
+    "vlim": TextInput(title="Value Limit", value="1e-5", width=160),
 }
-fname = TextInput(title="fname", value="picks.csv")
+fname = TextInput(title="Path", value="picks.csv", width=330)
 
 signal = xr.DataArray()
 
@@ -126,7 +126,7 @@ def update_signal():
         signal = xp.decimate(
             signal, int(q), ftype="fir", zero_phase=True, dim="distance"
         )
-    if wlen := processing["space"]["mean_removal"].value:
+    if wlen := processing["space"]["highpass"].value:
         signal = xp.sliding_mean_removal(signal, wlen=float(wlen))
     # time
     if processing["time"]["integration"].active:
@@ -228,50 +228,54 @@ delete_selection = CustomJS(
 """,
 )
 
-b_delete = Button(label="delete")
+b_delete = Button(label="delete", button_type="warning", width=75)
 b_delete.js_on_click(delete_selection)
-
-b_apply = Button(label="apply")
+b_apply = Button(label="apply", button_type="success", width=160)
 b_apply.on_click(callback)
-b_home = Button(label="home")
+b_home = Button(label="home", button_type="primary", width=160)
 b_home.on_click(update_range)
-
-b_mapper = Button(label="apply")
+b_mapper = Button(label="apply", button_type="success", width=160)
 b_mapper.on_click(update_image)
-
-b_save = Button(label="save")
+b_save = Button(label="save", button_type="success", width=75)
 b_save.on_click(save_picks)
-b_load = Button(label="load")
+b_load = Button(label="load", button_type="primary", width=75)
 b_load.on_click(load_picks)
-b_reset = Button(label="reset")
+b_reset = Button(label="reset", button_type="danger", width=75)
 b_reset.on_click(reset_picks)
 
 doc.add_root(
     row(
         fig,
         column(
-            b_delete,
-            Div(text="<h2>Selection & Processing</h2>"),
-            row(selection["starttime"], selection["endtime"]),
-            row(selection["startdistance"], selection["enddistance"]),
+            Div(text="<h2 style='margin: 0'>Selection & Processing</h2>"),
             row(
                 column(
-                    Div(text="<h3>Space</h3>"),
-                    *processing["space"].values(),
+                    Div(text="<h3 style='margin: 0'>Time</h3>"),
+                    selection["starttime"],
+                    selection["endtime"],
+                    processing["time"]["integration"],
+                    row(
+                        processing["time"]["decimation"], processing["time"]["highpass"]
+                    ),
                 ),
                 column(
-                    Div(text="<h3>Time</h3>"),
-                    *processing["time"].values(),
+                    Div(text="<h3 style='margin: 0'>Space</h3>"),
+                    selection["startdistance"],
+                    selection["enddistance"],
+                    processing["space"]["integration"],
+                    row(
+                        processing["space"]["decimation"],
+                        processing["space"]["highpass"],
+                    ),
                 ),
             ),
             row(b_apply, b_home),
-            Div(text="<h2>Colormap</h2>"),
-            mapper["palette"],
+            Div(text="<h2 style='margin: 0'>Colormap</h2>"),
             row(mapper["linthresh"], mapper["vlim"]),
-            b_mapper,
-            Div(text="<h2>File</h2>"),
+            row(b_mapper, mapper["palette"]),
+            Div(text="<h2 style='margin: 0'>Picks</h2>"),
             fname,
-            row(b_save, b_load, b_reset),
+            row(b_save, b_load, b_delete, b_reset),
         ),
     )
 )
