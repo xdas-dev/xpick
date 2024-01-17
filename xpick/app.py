@@ -75,27 +75,27 @@ for phase in phases:
 
 
 selection = {
-    "starttime": TextInput(title="starttime", value="2021-11-13T01:40:55"),
-    "endtime": TextInput(title="endtime", value="2021-11-13T01:41:15"),
-    "startdistance": TextInput(title="startdistance", value="15_000.0"),
-    "enddistance": TextInput(title="enddistance", value="125_000.0"),
+    "starttime": TextInput(title="starttime", value="2021-11-13T01:40:55", width=160),
+    "endtime": TextInput(title="endtime", value="2021-11-13T01:41:15", width=160),
+    "startdistance": TextInput(title="startdistance", value="15_000.0", width=160),
+    "enddistance": TextInput(title="enddistance", value="125_000.0", width=160),
 }
 processing = {
     "space": {
         "integration": Toggle(label="Integrate"),
-        "decimation": TextInput(title="Decimate", value=""),
-        "mean_removal": TextInput(title="Mean Removal", value=""),
+        "decimation": TextInput(title="Decimate", value="", width=160),
+        "mean_removal": TextInput(title="Mean Removal", value="", width=160),
     },
     "time": {
         "integration": Toggle(label="Integrate"),
-        "decimation": TextInput(title="Decimate", value=""),
-        "highpass": TextInput(title="Highpass", value=""),
+        "decimation": TextInput(title="Decimate", value="", width=160),
+        "highpass": TextInput(title="Highpass", value="", width=160),
     },
 }
 mapper = {
     "palette": RadioButtonGroup(labels=["viridis", "seismic"], active=0),
-    "linthresh": TextInput(title="linthresh", value="1e-8"),
-    "vlim": TextInput(title="vlim", value="1e-5"),
+    "linthresh": TextInput(title="linthresh", value="1e-8", width=160),
+    "vlim": TextInput(title="vlim", value="1e-5", width=160),
 }
 fname = TextInput(title="fname", value="picks.csv")
 
@@ -247,17 +247,24 @@ doc.add_root(
     row(
         fig,
         column(
-            Div(text="<h2>Selection</h2>"),
             b_delete,
-            *selection.values(),
+            Div(text="<h2>Selection & Processing</h2>"),
+            row(selection["starttime"], selection["endtime"]),
+            row(selection["startdistance"], selection["enddistance"]),
+            row(
+                column(
+                    Div(text="<h3>Space</h3>"),
+                    *processing["space"].values(),
+                ),
+                column(
+                    Div(text="<h3>Time</h3>"),
+                    *processing["time"].values(),
+                ),
+            ),
             row(b_apply, b_home),
-            Div(text="<h2>Processing</h2>"),
-            Div(text="<h3>Space</h3>"),
-            *processing["space"].values(),
-            Div(text="<h3>Time</h3>"),
-            *processing["time"].values(),
             Div(text="<h2>Colormap</h2>"),
-            *mapper.values(),
+            mapper["palette"],
+            row(mapper["linthresh"], mapper["vlim"]),
             b_mapper,
             Div(text="<h2>File</h2>"),
             fname,
