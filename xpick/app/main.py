@@ -40,8 +40,6 @@ phase_cmap = factor_cmap(
 
 # global variables
 db = xdas.open_database(args.path)
-range_x = Range1d()
-range_y = Range1d()
 source_image = ColumnDataSource(data=dict(image=[], x=[], y=[], dw=[], dh=[]))
 source_picks = ColumnDataSource(data=dict(time=[], distance=[], phase=[], status=[]))
 
@@ -49,12 +47,9 @@ source_picks = ColumnDataSource(data=dict(time=[], distance=[], phase=[], status
 # layout
 doc = curdoc()
 fig = figure(
-    name="xpick",
     width=args.width,
     height=args.height,
     y_axis_type="datetime",
-    x_range=range_x,
-    y_range=range_y,
 )
 img = fig.image(
     source=source_image,
@@ -78,20 +73,20 @@ for phase in phases:
 
 
 selection = {
-    "starttime": TextInput(title="Start", value="2021-11-13T01:40:55", width=160),
-    "endtime": TextInput(title="End", value="2021-11-13T01:41:15", width=160),
-    "startdistance": TextInput(title="Start", value="15_000.0", width=160),
-    "enddistance": TextInput(title="End", value="125_000.0", width=160),
+    "starttime": TextInput(title="Start", value="2021-11-13T01:41:00", width=160),
+    "endtime": TextInput(title="End", value="2021-11-13T01:41:10", width=160),
+    "startdistance": TextInput(title="Start", value="20_000.0", width=160),
+    "enddistance": TextInput(title="End", value="120_000.0", width=160),
 }
 processing = {
     "space": {
         "integration": Toggle(label="Integrate", width=160),
-        "decimation": TextInput(title="Decimate", value="", width=75),
+        "decimation": TextInput(title="Decimate", value="16", width=75),
         "highpass": TextInput(title="Highpass", value="", width=75),
     },
     "time": {
         "integration": Toggle(label="Integrate", width=160),
-        "decimation": TextInput(title="Decimate", value="", width=75),
+        "decimation": TextInput(title="Decimate", value="4", width=75),
         "highpass": TextInput(title="Highpass", value="", width=75),
     },
 }
@@ -102,12 +97,9 @@ mapper = {
 }
 fname = TextInput(title="Path", value="picks.csv", width=330)
 
-signal = xr.DataArray()
-
 
 # callbacks
-def update_signal():
-    global signal
+def load_signal(db, selection):
     # load
     signal = db.sel(
         time=slice(
@@ -119,6 +111,10 @@ def update_signal():
             float(selection["enddistance"].value),
         ),
     ).to_xarray()
+    return signal
+
+
+def process_signal(signal, processing):
     # distance
     if processing["space"]["integration"].active:
         signal = xp.integrate(signal, dim="distance")
@@ -137,9 +133,12 @@ def update_signal():
         signal = xp.iirfilter(signal, freq=float(freq), btype="highpass")
     # gain
     signal *= 1.08e-7
+    return signal
 
 
 def update_image():
+    signal = load_signal(db, selection)
+    signal = process_signal(signal, processing)
     norm = SymLogNorm(
         linthresh=float(mapper["linthresh"].value),
         vmin=-float(mapper["vlim"].value),
@@ -171,12 +170,10 @@ mapper["palette"].on_change("active", lambda attr, old, new: update_palette())
 
 def update_range():
     x, y, dw, dh = [source_image.data[key][0] for key in ["x", "y", "dw", "dh"]]
-    range_x.start = x
-    range_x.end = x + dw
-    range_x.bounds = (x, x + dw)
-    range_y.start = y + dh
-    range_y.end = y
-    range_y.bounds = (y, y + dh)
+    fig.x_range.start = x
+    fig.x_range.end = x + dw
+    fig.y_range.start = y + dh
+    fig.y_range.end = y
 
 
 def save_picks():
@@ -198,7 +195,6 @@ def reset_picks():
 
 
 def callback():
-    update_signal()
     update_image()
     update_palette()
     update_range()
