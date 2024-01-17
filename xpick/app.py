@@ -27,6 +27,8 @@ from pickertool import PickerTool
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--path")
+parser.add_argument("--width", type=int)
+parser.add_argument("--height", type=int)
 args = parser.parse_args()
 
 # global constants
@@ -47,8 +49,8 @@ source_picks = ColumnDataSource(data=dict(time=[], distance=[], phase=[], status
 # layout
 doc = curdoc()
 fig = figure(
-    width=1920,
-    height=1080,
+    width=args.width,
+    height=args.height,
     y_axis_type="datetime",
     x_range=range_x,
     y_range=range_y,
