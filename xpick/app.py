@@ -18,6 +18,7 @@ from bokeh.models import (
     RadioButtonGroup,
     Range1d,
     TextInput,
+    Toggle,
 )
 from bokeh.plotting import curdoc, figure
 from bokeh.transform import factor_cmap
@@ -82,6 +83,18 @@ selection = {
     "startdistance": TextInput(title="startdistance", value="15_000.0"),
     "enddistance": TextInput(title="enddistance", value="125_000.0"),
 }
+processing = {
+    "space": {
+        "integration": Toggle(label="Integrate"),
+        "decimation": TextInput(title="Decimate", value=""),
+        "mean_removal": TextInput(title="Mean Removal", value=""),
+    },
+    "time": {
+        "integration": Toggle(label="Integrate"),
+        "decimation": TextInput(title="Decimate", value=""),
+        "highpass": TextInput(title="Highpass", value=""),
+    },
+}
 mapper = {
     "palette": RadioButtonGroup(labels=["viridis", "seismic"], active=0),
     "linthresh": TextInput(title="linthresh", value="1e-8"),
@@ -107,16 +120,19 @@ def update_signal():
         ),
     ).to_xarray()
     # distance
-    signal = xp.integrate(signal, dim="distance")
-    signal = xp.decimate(signal, 12, ftype="fir", zero_phase=True, dim="distance")
-    signal = xp.sliding_mean_removal(signal, wlen=2000.0)
-    signal = xp.iirfilter(
-        signal, freq=1 / 100, btype="lowpass", zerophase=True, dim="distance"
-    )
+    if processing["space"]["integration"].active:
+        signal = xp.integrate(signal, dim="distance")
+    if q := processing["space"]["decimation"].value:
+        signal = xp.decimate(signal, int(q), ftype="fir", zero_phase=True, dim="distance")
+    if wlen := processing["space"]["mean_removal"].value:
+        signal = xp.sliding_mean_removal(signal, wlen=float(wlen))
     # time
-    signal = xp.integrate(signal, dim="time")
-    signal = xp.decimate(signal, 2, ftype="iir", zero_phase=False, dim="time")
-    signal = xp.iirfilter(signal, freq=5.0, btype="highpass")
+    if processing["time"]["integration"].active:
+        signal = xp.integrate(signal, dim="time")
+    if q := processing["time"]["decimation"].value:
+        signal = xp.decimate(signal, int(q), ftype="iir", zero_phase=False, dim="time")
+    if freq := processing["time"]["highpass"].value:
+        signal = xp.iirfilter(signal, freq=float(freq), btype="highpass")
     # gain
     signal *= 1.08e-7
 
@@ -241,6 +257,11 @@ doc.add_root(
             b_delete,
             *selection.values(),
             row(b_apply, b_home),
+            Div(text="<h2>Processing</h2>"),
+            Div(text="<h3>Space</h3>"),
+            *processing["space"].values(),
+            Div(text="<h3>Time</h3>"),
+            *processing["time"].values(),
             Div(text="<h2>Colormap</h2>"),
             *mapper.values(),
             b_mapper,
