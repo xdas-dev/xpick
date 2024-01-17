@@ -17,12 +17,14 @@ from bokeh.models import (
     LinearColorMapper,
     RadioButtonGroup,
     Range1d,
+    Slider,
     TextInput,
     Toggle,
 )
 from bokeh.plotting import curdoc, figure
 from bokeh.transform import factor_cmap
 from matplotlib.colors import SymLogNorm
+
 from xpick.app.pickertool import PickerTool
 
 parser = argparse.ArgumentParser()
@@ -71,6 +73,15 @@ crc = fig.circle(
     color=phase_cmap,
 )
 
+slider = Slider(start=1, end=50, value=2, step=1, title="Marker Size", width=330)
+slider_callback = CustomJS(
+    args=dict(circle=crc, slider=slider),
+    code="""
+    circle.glyph.size = slider.value;
+""",
+)
+slider.js_on_change("value", slider_callback)
+
 fig.add_tools(LassoSelectTool())
 for phase in phases:
     fig.add_tools(PickerTool(source=source_picks, phase=phase))
@@ -99,7 +110,7 @@ mapper = {
     "linthresh": TextInput(title="Linear Threshold", value="1e-8", width=160),
     "vlim": TextInput(title="Value Limit", value="1e-5", width=160),
 }
-fname = TextInput(title="Path", value="picks.csv", width=330)
+fname = TextInput(title="Path", width=330)
 
 
 # callbacks
@@ -290,6 +301,7 @@ doc.add_root(
             row(mapper["linthresh"], mapper["vlim"]),
             row(b_mapper, mapper["palette"]),
             Div(text="<h2 style='margin: 0'>Picks</h2>"),
+            slider,
             fname,
             row(b_save, b_load, b_delete, b_reset),
         ),
