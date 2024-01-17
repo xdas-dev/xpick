@@ -9,10 +9,10 @@ def main():
     parser = argparse.ArgumentParser(description="A picking tool for DAS.")
     parser.add_argument("path", help="Path of the database to explore.")
     parser.add_argument(
-        "--width", help="Width of the image in pixels.", type=int, default=1920
+        "--width", help="Width of the image in pixels.", type=int, default=1080
     )
     parser.add_argument(
-        "--height", help="Height of the image in pixels.", type=int, default=1080
+        "--height", help="Height of the image in pixels.", type=int, default=720
     )
     args, remaining_args = parser.parse_known_args()
     cmd = ["bokeh", "serve", path]
