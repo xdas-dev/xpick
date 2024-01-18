@@ -14,7 +14,7 @@ dependencies = ["bokeh", "colorcet", "matplotlib", "numpy", "pandas", "xarray", 
 dev = ["black", "isort", "pytest"]
 
 [tool.setuptools.package-data]
-xpick = ["*.ts"]
+"xpick.app" = ["*.ts"]
 
 [project.scripts]
 xpick = "xpick.__main__:main"
