@@ -13,6 +13,9 @@ dependencies = ["bokeh", "matplotlib", "numpy", "pandas", "xarray", "xdas"]
 [project.optional-dependencies]
 dev = ["black", "isort", "pytest"]
 
+[tool.setuptools.package-data]
+myModule = ["*.ts"]
+
 [project.scripts]
 xpick = "xpick.__main__:main"
 
