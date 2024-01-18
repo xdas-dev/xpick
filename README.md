@@ -5,7 +5,7 @@ Web app for manual picking of DAS data.
 ## Instalation
 
 ```
-pip install "git+https://github.com/xdas-dev/xdas.git"
+pip install "git+https://github.com/xdas-dev/xpick.git"
 ```
 
 ## Usage
