@@ -47,7 +47,7 @@ phase_cmap = factor_cmap(field_name="phase", palette=phase_colors, factors=phase
 
 # global variables
 
-db = xdas.open_database(args.path)
+path = args.path
 x_range = Range1d()
 y_range = Range1d()
 source_image = ColumnDataSource(data=dict(image=[], x=[], y=[], dw=[], dh=[]))
@@ -88,6 +88,7 @@ fig.add_tools(PickerTool(source=source_picks, phase=phase))
 # widgets
 
 selection = {
+    "database": TextInput(title="Database", value=path, width=330),
     "starttime": TextInput(title="Start", value="2021-11-13T01:41:00", width=160),
     "endtime": TextInput(title="End", value="2021-11-13T01:41:10", width=160),
     "startdistance": TextInput(title="Start", value="20_000.0", width=160),
@@ -142,6 +143,7 @@ slider.js_on_change("value", slider_callback)
 
 def callback():
     global signal, image
+    db = xdas.open_database(selection["database"].value)
     signal = load_signal(db, selection)
     signal = process_signal(signal, processing)
     image = normalize_signal(signal, mapper)
@@ -277,6 +279,7 @@ doc.add_root(
         fig,
         column(
             Div(text="<h2 style='margin: 0'>Selection & Processing</h2>"),
+            selection["database"],
             row(
                 column(
                     Div(text="<h3 style='margin: 0'>Time</h3>"),
