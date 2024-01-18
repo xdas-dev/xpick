@@ -19,6 +19,8 @@ from bokeh.models import (
     Slider,
     TextInput,
     Toggle,
+    ColorPicker,
+    CategoricalColorMapper,
 )
 from bokeh.plotting import curdoc, figure
 from bokeh.transform import factor_cmap
@@ -39,9 +41,8 @@ args = parser.parse_args()
 
 palette_mapping = ["Viridis256", cc.CET_D1A]
 phase_labels = ["Pp", "Ps", "Ss"]
-phase_cmap = factor_cmap(
-    field_name="phase", palette=["#7F0DFF", "#BF0DFF", "#FF00FF"], factors=phase_labels
-)
+phase_colors = ["#7F0DFF", "#BF0DFF", "#FF00FF"]
+phase_cmap = factor_cmap(field_name="phase", palette=phase_colors, factors=phase_labels)
 
 
 # global variables
@@ -112,6 +113,13 @@ mapper = {
     "vlim": TextInput(title="Value Limit", value="1e-5", width=160),
 }
 b_mapper = Button(label="apply", button_type="success", width=160)
+
+color_pickers = {
+    phase: ColorPicker(title=phase, color=color, width=60)
+    for phase, color in zip(phase_labels, phase_colors)
+}
+
+
 slider = Slider(start=1, end=10, value=3, step=1, title="Marker Size", width=330)
 path = TextInput(title="Path", width=330)
 b_delete = Button(label="delete", button_type="warning", width=75)
@@ -188,6 +196,18 @@ def update_range():
 
 b_home.on_click(update_range)
 
+def update_colors(attr, old, new):
+    print("Changing picks colors...", end="")
+    for idx, color_picker in enumerate(color_pickers.values()):
+        phase_colors[idx] = color_picker.color
+    transform = CategoricalColorMapper(factors=phase_labels, palette=phase_colors)
+    crc.glyph.line_color = dict(field="phase", transform=transform)
+    crc.glyph.fill_color = dict(field="phase", transform=transform)
+    print(phase_cmap.transform.palette)
+    print("Done")
+
+for color_picker in color_pickers.values():
+    color_picker.on_change("color", update_colors)
 
 def save_picks():
     print("Saving picks... ", end="")
@@ -284,6 +304,7 @@ doc.add_root(
             row(b_mapper, mapper["palette"]),
             Div(text="<h2 style='margin: 0'>Picks</h2>"),
             phase,
+            row(*color_pickers.values()),
             slider,
             path,
             row(b_save, b_load, b_delete, b_reset),
