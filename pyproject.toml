@@ -8,13 +8,13 @@ version = "0.1.0"
 authors = [
     { name = "Alister Trabattoni", email = "alister.trabattoni@gmail.com" },
 ]
-dependencies = ["bokeh", "matplotlib", "numpy", "pandas", "xarray", "xdas"]
+dependencies = ["bokeh", "colorcet", "matplotlib", "numpy", "pandas", "xarray", "xdas"]
 
 [project.optional-dependencies]
 dev = ["black", "isort", "pytest"]
 
 [tool.setuptools.package-data]
-myModule = ["*.ts"]
+xpick = ["*.ts"]
 
 [project.scripts]
 xpick = "xpick.__main__:main"
