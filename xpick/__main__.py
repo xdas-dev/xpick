@@ -14,7 +14,7 @@ def main():
         --show)
         """
     )
-    parser.add_argument("path", nargs='?', help="Path of the database to explore.")
+    parser.add_argument("paths", nargs="+", help="Path of the database to explore.")
     parser.add_argument(
         "--width", help="Width of the image in pixels.", type=int, default=1080
     )
@@ -26,7 +26,10 @@ def main():
     extra = []
     for key, value in vars(args).items():
         extra.append(f"--{key}")
-        extra.append(f"{value}")
+        if isinstance(value, list):
+            for element in value:
+                extra.append(str(element))
+        else:
+            extra.append(str(value))
     cmd = cmd + list(remaining_args) + ["--args"] + extra
-    print(" ".join(cmd))
     subprocess.call(cmd)

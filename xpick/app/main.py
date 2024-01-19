@@ -9,6 +9,8 @@ import xdas.signal as xp
 from bokeh.layouts import column, row
 from bokeh.models import (
     Button,
+    CategoricalColorMapper,
+    ColorPicker,
     ColumnDataSource,
     CustomJS,
     Div,
@@ -16,22 +18,21 @@ from bokeh.models import (
     LinearColorMapper,
     RadioButtonGroup,
     Range1d,
+    Select,
     Slider,
     TextInput,
     Toggle,
-    ColorPicker,
-    CategoricalColorMapper,
 )
 from bokeh.plotting import curdoc, figure
 from bokeh.transform import factor_cmap
 
-from xpick.app.processing import load_signal, normalize_signal, process_signal
 from xpick.app.pickertool import PickerTool
+from xpick.app.processing import load_signal, normalize_signal, process_signal
 
 # parse arguments
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--path")
+parser.add_argument("--paths", nargs="+")
 parser.add_argument("--width", type=int)
 parser.add_argument("--height", type=int)
 args = parser.parse_args()
@@ -47,7 +48,7 @@ phase_cmap = factor_cmap(field_name="phase", palette=phase_colors, factors=phase
 
 # global variables
 
-path = args.path
+paths = args.paths
 x_range = Range1d()
 y_range = Range1d()
 source_image = ColumnDataSource(data=dict(image=[], x=[], y=[], dw=[], dh=[]))
@@ -88,7 +89,7 @@ fig.add_tools(PickerTool(source=source_picks, phase=phase))
 # widgets
 
 selection = {
-    "database": TextInput(title="Database", value=path, width=330),
+    "database": Select(title="Database", value=paths[0], options=paths, width=330),
     "starttime": TextInput(title="Start", value="2021-11-13T01:41:00", width=160),
     "endtime": TextInput(title="End", value="2021-11-13T01:41:10", width=160),
     "startdistance": TextInput(title="Start", value="20_000.0", width=160),
@@ -198,6 +199,7 @@ def update_range():
 
 b_home.on_click(update_range)
 
+
 def update_colors(attr, old, new):
     print("Changing picks colors...", end="")
     for idx, color_picker in enumerate(color_pickers.values()):
@@ -205,11 +207,12 @@ def update_colors(attr, old, new):
     transform = CategoricalColorMapper(factors=phase_labels, palette=phase_colors)
     crc.glyph.line_color = dict(field="phase", transform=transform)
     crc.glyph.fill_color = dict(field="phase", transform=transform)
-    print(phase_cmap.transform.palette)
     print("Done")
+
 
 for color_picker in color_pickers.values():
     color_picker.on_change("color", update_colors)
+
 
 def save_picks():
     print("Saving picks... ", end="")

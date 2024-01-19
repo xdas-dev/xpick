@@ -1,5 +1,5 @@
-from matplotlib.colors import SymLogNorm
 import xdas.signal as xp
+from matplotlib.colors import SymLogNorm
 
 
 def load_signal(db, selection):
