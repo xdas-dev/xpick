@@ -133,12 +133,12 @@ console = PreText(text="", width=330, height=100)
 # changes
 
 changes = {
-    "load_signal": False,
-    "process_signal": False,
-    "normalize_signal": False,
-    "update_image": False,
-    "update_palette": False,
-    "update_range": False,
+    "load_signal": True,
+    "process_signal": True,
+    "normalize_signal": True,
+    "update_image": True,
+    "update_palette": True,
+    "update_range": True,
 }
 
 for widget in selection.values():
@@ -218,6 +218,9 @@ def callback():
     if changes["load_signal"]:
         raw_signal = console_message("Loading signal...")(load_signal)(selection)
         changes["load_signal"] = False
+        if raw_signal.size == 0:
+            print_console("ERROR: No data found for that selection.")
+            return
     if changes["process_signal"]:
         pro_signal = console_message("Processing signal...")(process_signal)(
             raw_signal, processing
