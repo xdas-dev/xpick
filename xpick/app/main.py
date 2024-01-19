@@ -54,7 +54,8 @@ y_range = Range1d()
 source_image = ColumnDataSource(data=dict(image=[], x=[], y=[], dw=[], dh=[]))
 source_picks = ColumnDataSource(data=dict(time=[], distance=[], phase=[], status=[]))
 phase = RadioButtonGroup(labels=phase_labels, active=0, width=330)
-signal = xr.DataArray()
+raw_signal = xr.DataArray()
+pro_signal = xr.DataArray()
 image = xr.DataArray()
 
 
@@ -107,14 +108,13 @@ processing = {
         "highpass": TextInput(title="Highpass", value="", width=75),
     },
 }
-b_apply = Button(label="apply", button_type="success", width=160)
-b_home = Button(label="home", button_type="primary", width=160)
 mapper = {
-    "palette": RadioButtonGroup(labels=["viridis", "seismic"], active=0, width=160),
+    "palette": RadioButtonGroup(labels=["viridis", "seismic"], active=0, width=330),
     "linthresh": TextInput(title="Linear Threshold", value="1e-8", width=160),
     "vlim": TextInput(title="Value Limit", value="1e-5", width=160),
 }
-b_mapper = Button(label="apply", button_type="success", width=160)
+b_apply = Button(label="apply", button_type="success", width=160)
+b_home = Button(label="home", button_type="primary", width=160)
 
 color_pickers = {
     phase: ColorPicker(title=phase, color=color, width=60)
@@ -139,18 +139,84 @@ slider_callback = CustomJS(
 slider.js_on_change("value", slider_callback)
 
 
+# changes
+
+changes = {
+    "load_signal": False,
+    "process_signal": False,
+    "normalize_signal": False,
+    "update_image": False,
+    "update_palette": False,
+    "update_range": False,
+}
+
+for widget in selection.values():
+    widget.on_change(
+        "value",
+        lambda attr, old, new: changes.update(
+            {
+                "load_signal": True,
+                "process_signal": True,
+                "normalize_signal": True,
+                "update_image": True,
+                "update_range": True,
+            }
+        ),
+    )
+for dim in processing:
+    for widget in processing[dim].values():
+        if hasattr(widget, "active"):
+            attr = "active"
+        else:
+            attr = "value"
+        widget.on_change(
+            attr,
+            lambda attr, old, new: changes.update(
+                {
+                    "process_signal": True,
+                    "normalize_signal": True,
+                    "update_image": True,
+                }
+            ),
+        )
+for widget in mapper.values():
+    if hasattr(widget, "active"):
+        attr = "active"
+    else:
+        attr = "value"
+    widget.on_change(
+        attr,
+        lambda attr, old, new: changes.update(
+            {
+                "normalize_signal": True,
+                "update_image": True,
+            }
+        ),
+    )
+
 # callbacks
 
 
 def callback():
-    global signal, image
-    db = xdas.open_database(selection["database"].value)
-    signal = load_signal(db, selection)
-    signal = process_signal(signal, processing)
-    image = normalize_signal(signal, mapper)
-    update_image(image)
-    update_palette()
-    update_range()
+    global raw_signal, pro_signal, image
+    if changes["load_signal"]:
+        raw_signal = load_signal(selection)
+        changes["load_signal"] = False
+    if changes["process_signal"]:
+        pro_signal = process_signal(raw_signal, processing)
+        changes["process_signal"] = False
+    if changes["normalize_signal"]:
+        image = normalize_signal(pro_signal, mapper)
+        changes["normalize_signal"] = False
+    if changes["update_image"]:
+        update_image(image)
+        changes["update_image"] = False
+    if changes["update_palette"]:
+        update_palette()
+        changes["update_palette"] = False
+    if changes["update_range"]:
+        update_range()
+        changes["update_range"] = False
 
 
 b_apply.on_click(callback)
@@ -173,9 +239,6 @@ def update_image(image):
     print("Done.")
 
 
-b_mapper.on_click(lambda: update_image(normalize_signal(signal, mapper)))
-
-
 def update_palette():
     print("Updating palette... ", end="")
     palette = palette_mapping[mapper["palette"].active]
@@ -183,7 +246,7 @@ def update_palette():
     img.glyph.color_mapper = image_mapper
     print("Done.")
 
-
+update_palette()
 mapper["palette"].on_change("active", lambda attr, old, new: update_palette())
 
 
@@ -200,7 +263,7 @@ def update_range():
 b_home.on_click(update_range)
 
 
-def update_colors(attr, old, new):
+def update_colors():
     print("Changing picks colors...", end="")
     for idx, color_picker in enumerate(color_pickers.values()):
         phase_colors[idx] = color_picker.color
@@ -211,7 +274,7 @@ def update_colors(attr, old, new):
 
 
 for color_picker in color_pickers.values():
-    color_picker.on_change("color", update_colors)
+    color_picker.on_change("color", lambda attr, old, new: update_colors())
 
 
 def save_picks():
@@ -304,10 +367,10 @@ doc.add_root(
                     ),
                 ),
             ),
-            row(b_apply, b_home),
-            Div(text="<h2 style='margin: 0'>Colormap</h2>"),
+            Div(text="<h3 style='margin: 0'>Colormap</h3>"),
+            mapper["palette"],
             row(mapper["linthresh"], mapper["vlim"]),
-            row(b_mapper, mapper["palette"]),
+            row(b_apply, b_home),
             Div(text="<h2 style='margin: 0'>Picks</h2>"),
             phase,
             row(*color_pickers.values()),

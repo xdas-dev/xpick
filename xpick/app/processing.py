@@ -1,8 +1,10 @@
+import xdas
 import xdas.signal as xp
 from matplotlib.colors import SymLogNorm
 
 
-def load_signal(db, selection):
+def load_signal(selection):
+    db = xdas.open_database(selection["database"].value)
     print("Loading signal... ", end="")
     # load
     signal = db.sel(
