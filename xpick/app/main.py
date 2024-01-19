@@ -16,6 +16,7 @@ from bokeh.models import (
     Div,
     LassoSelectTool,
     LinearColorMapper,
+    PreText,
     RadioButtonGroup,
     Range1d,
     Select,
@@ -75,6 +76,7 @@ img = fig.image(
     y="y",
     dw="dw",
     dh="dh",
+    color_mapper=palette_mapping[0],
 )
 crc = fig.circle(
     source=source_picks,
@@ -115,28 +117,17 @@ mapper = {
 }
 b_apply = Button(label="apply", button_type="success", width=160)
 b_home = Button(label="home", button_type="primary", width=160)
-
 color_pickers = {
     phase: ColorPicker(title=phase, color=color, width=60)
     for phase, color in zip(phase_labels, phase_colors)
 }
-
-
 slider = Slider(start=1, end=10, value=3, step=1, title="Marker Size", width=330)
 path = TextInput(title="Path", width=330)
 b_delete = Button(label="delete", button_type="warning", width=75)
 b_save = Button(label="save", button_type="success", width=75)
 b_load = Button(label="load", button_type="primary", width=75)
 b_reset = Button(label="reset", button_type="danger", width=75)
-
-
-slider_callback = CustomJS(
-    args=dict(circle=crc, slider=slider),
-    code="""
-    circle.glyph.size = slider.value;
-""",
-)
-slider.js_on_change("value", slider_callback)
+console = PreText(text="", width=330, height=100)
 
 
 # changes
@@ -196,17 +187,46 @@ for widget in mapper.values():
 
 # callbacks
 
+content = ""
+
+
+def print_console(text, end="\n"):
+    global content
+    content += text + end
+    content = "\n".join(content.split("\n")[-6:])
+    console.text = "".join(content)
+
+
+print_console("Welcome to xpick!")
+
+
+def console_message(message):
+    def decorator(function):
+        def wrapper(*args, **kwargs):
+            print_console(message, end="")
+            out = function(*args, **kwargs)
+            print_console(" Done.")
+            return out
+
+        return wrapper
+
+    return decorator
+
 
 def callback():
     global raw_signal, pro_signal, image
     if changes["load_signal"]:
-        raw_signal = load_signal(selection)
+        raw_signal = console_message("Loading signal...")(load_signal)(selection)
         changes["load_signal"] = False
     if changes["process_signal"]:
-        pro_signal = process_signal(raw_signal, processing)
+        pro_signal = console_message("Processing signal...")(process_signal)(
+            raw_signal, processing
+        )
         changes["process_signal"] = False
     if changes["normalize_signal"]:
-        image = normalize_signal(pro_signal, mapper)
+        image = console_message("Normalizing image...")(normalize_signal)(
+            pro_signal, mapper
+        )
         changes["normalize_signal"] = False
     if changes["update_image"]:
         update_image(image)
@@ -222,8 +242,8 @@ def callback():
 b_apply.on_click(callback)
 
 
+@console_message("Updating image...")
 def update_image(image):
-    print("Updating image... ", end="")
     t0 = image["time"][0].values
     s0 = image["distance"][0].values
     L = image["distance"][-1].values - image["distance"][0].values
@@ -236,69 +256,72 @@ def update_image(image):
     dw = L + ds
     dh = T + dt
     source_image.data = dict(image=[image.data], x=[x], y=[y], dw=[dw], dh=[dh])
-    print("Done.")
 
 
+@console_message("Updating palette...")
 def update_palette():
-    print("Updating palette... ", end="")
     palette = palette_mapping[mapper["palette"].active]
     image_mapper = LinearColorMapper(palette=palette, low=0, high=1)
     img.glyph.color_mapper = image_mapper
-    print("Done.")
 
-update_palette()
+
 mapper["palette"].on_change("active", lambda attr, old, new: update_palette())
 
 
+@console_message("Updating range...")
 def update_range():
-    print("Updating range... ", end="")
     x, y, dw, dh = [source_image.data[key][0] for key in ["x", "y", "dw", "dh"]]
     x_range.start = x
     x_range.end = x + dw
     y_range.start = y + dh
     y_range.end = y
-    print("Done.")
 
 
-b_home.on_click(update_range)
+b_home.on_click(lambda: update_range())
 
 
+@console_message("Updating picks colors...")
 def update_colors():
-    print("Changing picks colors...", end="")
     for idx, color_picker in enumerate(color_pickers.values()):
         phase_colors[idx] = color_picker.color
     transform = CategoricalColorMapper(factors=phase_labels, palette=phase_colors)
     crc.glyph.line_color = dict(field="phase", transform=transform)
     crc.glyph.fill_color = dict(field="phase", transform=transform)
-    print("Done")
 
 
 for color_picker in color_pickers.values():
     color_picker.on_change("color", lambda attr, old, new: update_colors())
 
 
+slider_callback = CustomJS(
+    args=dict(circle=crc, slider=slider),
+    code="""
+    circle.glyph.size = slider.value;
+""",
+)
+slider.js_on_change("value", slider_callback)
+
+
+@console_message("Saving picks...")
 def save_picks():
-    print("Saving picks... ", end="")
     picks = pd.DataFrame(source_picks.data)
     picks["time"] = pd.to_datetime(picks["time"], unit="ms")
     picks = picks.sort_values("time")
     picks = picks.drop(columns=["status"])
     picks.to_csv(path.value, index=False)
-    print("Done.")
 
 
-b_save.on_click(save_picks)
+b_save.on_click(lambda: save_picks())
 
 
+@console_message("Loading picks...")
 def load_picks():
-    print("Loading picks... ", end="")
     picks = pd.read_csv(path.value, parse_dates=["time"])
     picks["status"] = "inactive"
     source_picks.data = picks.to_dict("list")
-    print("Done.")
 
 
-b_load.on_click(load_picks)
+b_load.on_click(lambda: load_picks())
 
 
 delete_selection = CustomJS(
@@ -327,13 +350,12 @@ delete_selection = CustomJS(
 b_delete.js_on_click(delete_selection)
 
 
+@console_message("Resetting picks...")
 def reset_picks():
-    print("Resetting picks... ", end="")
     source_picks.data = dict(time=[], distance=[], phase=[])
-    print("Done.")
 
 
-b_reset.on_click(reset_picks)
+b_reset.on_click(lambda: reset_picks())
 
 
 # layout
@@ -377,6 +399,7 @@ doc.add_root(
             slider,
             path,
             row(b_save, b_load, b_delete, b_reset),
+            console
         ),
     )
 )

@@ -5,7 +5,6 @@ from matplotlib.colors import SymLogNorm
 
 def load_signal(selection):
     db = xdas.open_database(selection["database"].value)
-    print("Loading signal... ", end="")
     # load
     signal = db.sel(
         time=slice(
@@ -17,12 +16,10 @@ def load_signal(selection):
             float(selection["enddistance"].value),
         ),
     ).to_xarray()
-    print("Done.")
     return signal
 
 
 def process_signal(signal, processing):
-    print("Processing signal... ", end="")
     # distance
     if processing["space"]["integration"].active:
         signal = xp.integrate(signal, dim="distance")
@@ -41,17 +38,14 @@ def process_signal(signal, processing):
         signal = xp.iirfilter(signal, freq=float(freq), btype="highpass")
     # gain
     signal *= 1.08e-7
-    print("Done.")
     return signal
 
 
 def normalize_signal(signal, mapper):
-    print("Map image... ", end="")
     norm = SymLogNorm(
         linthresh=float(mapper["linthresh"].value),
         vmin=-float(mapper["vlim"].value),
         vmax=float(mapper["vlim"].value),
     )
     image = signal.copy(data=norm(signal.values).data)
-    print("Done.")
     return image
