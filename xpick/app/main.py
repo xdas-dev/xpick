@@ -127,7 +127,7 @@ b_delete = Button(label="delete", button_type="warning", width=75)
 b_save = Button(label="save", button_type="success", width=75)
 b_load = Button(label="load", button_type="primary", width=75)
 b_reset = Button(label="reset", button_type="danger", width=75)
-console = PreText(text="", width=330, height=100)
+console = PreText(text="", width=330, height=30)
 
 
 # changes
@@ -193,7 +193,7 @@ content = ""
 def print_console(text, end="\n"):
     global content
     content += text + end
-    content = "\n".join(content.split("\n")[-6:])
+    content = "\n".join(content.split("\n")[-4:])
     console.text = "".join(content)
 
 
@@ -217,10 +217,10 @@ def callback():
     global raw_signal, pro_signal, image
     if changes["load_signal"]:
         raw_signal = console_message("Loading signal...")(load_signal)(selection)
-        changes["load_signal"] = False
         if raw_signal.size == 0:
             print_console("ERROR: No data found for that selection.")
             return
+        changes["load_signal"] = False
     if changes["process_signal"]:
         pro_signal = console_message("Processing signal...")(process_signal)(
             raw_signal, processing
