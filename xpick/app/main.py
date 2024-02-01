@@ -320,6 +320,7 @@ b_save.on_click(lambda: save_picks())
 @console_message("Loading picks...")
 def load_picks():
     picks = pd.read_csv(path.value, parse_dates=["time"])
+    picks["time"] = (picks["time"] - np.datetime64(0, "ms")) / np.timedelta64(1, "ms")
     picks["status"] = "inactive"
     source_picks.data = picks.to_dict("list")
 
