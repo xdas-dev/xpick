@@ -35,7 +35,7 @@ def process_signal(signal, processing):
     if q := processing["time"]["decimation"].value:
         signal = xp.decimate(signal, int(q), ftype="iir", zero_phase=False, dim="time")
     if freq := processing["time"]["highpass"].value:
-        signal = xp.iirfilter(signal, freq=float(freq), btype="highpass")
+        signal = xp.iirfilter(signal, freq=float(freq), btype="highpass", dim="time")
     # gain
     signal *= 1.08e-7
     return signal
