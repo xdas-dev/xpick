@@ -1,5 +1,7 @@
 # xpick
 
+[![DOI](https://zenodo.org/badge/744528873.svg)](https://zenodo.org/doi/10.5281/zenodo.10678341)
+
 Web app for manual picking of DAS data.
 
 ## Instalation
