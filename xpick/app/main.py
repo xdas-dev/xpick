@@ -47,7 +47,9 @@ phase_labels = args.phases.split(",")  # ["Pp", "Ps", "Ss"]
 phase_colors = args.colors.split(",")  # ["#7F0DFF", "#BF0DFF", "#FF00FF"]
 if len(phase_labels) != len(phase_colors):
     if not phase_colors == [""]:
-        print("Phase labels number do no match phase colors. Using default value instead.")
+        print(
+            "Phase labels number do no match phase colors. Using default value instead."
+        )
     phase_colors = ["#FF0000"] * len(phase_labels)
 phase_cmap = factor_cmap(field_name="phase", palette=phase_colors, factors=phase_labels)
 
