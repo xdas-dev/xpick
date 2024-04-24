@@ -3,7 +3,6 @@ import argparse
 import colorcet as cc
 import numpy as np
 import pandas as pd
-import xarray as xr
 import xdas
 import xdas.signal as xp
 from bokeh.layouts import column, row
@@ -55,9 +54,9 @@ y_range = Range1d()
 source_image = ColumnDataSource(data=dict(image=[], x=[], y=[], dw=[], dh=[]))
 source_picks = ColumnDataSource(data=dict(time=[], distance=[], phase=[], status=[]))
 phase = RadioButtonGroup(labels=phase_labels, active=0, width=330)
-raw_signal = xr.DataArray()
-pro_signal = xr.DataArray()
-image = xr.DataArray()
+raw_signal = xdas.DataArray()
+pro_signal = xdas.DataArray()
+image = xdas.DataArray()
 
 
 # figure
@@ -93,10 +92,10 @@ fig.add_tools(PickerTool(source=source_picks, phase=phase))
 
 selection = {
     "dataarray": Select(title="Data Array", value=paths[0], options=paths, width=330),
-    "starttime": TextInput(title="Start", value="2021-11-13T01:41:00", width=160),
-    "endtime": TextInput(title="End", value="2021-11-13T01:41:10", width=160),
-    "startdistance": TextInput(title="Start", value="20_000.0", width=160),
-    "enddistance": TextInput(title="End", value="120_000.0", width=160),
+    "starttime": TextInput(title="Start", value="", width=160),
+    "endtime": TextInput(title="End", value="", width=160),
+    "startdistance": TextInput(title="Start", value="", width=160),
+    "enddistance": TextInput(title="End", value="", width=160),
 }
 processing = {
     "space": {
@@ -403,7 +402,7 @@ doc.add_root(
             slider,
             path,
             row(b_save, b_load, b_delete, b_reset),
-            console
+            console,
         ),
     )
 )

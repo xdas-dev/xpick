@@ -8,7 +8,7 @@ version = "0.1.0"
 authors = [
     { name = "Alister Trabattoni", email = "alister.trabattoni@gmail.com" },
 ]
-dependencies = ["bokeh", "colorcet", "matplotlib", "numpy", "pandas", "xarray", "xdas"]
+dependencies = ["bokeh", "colorcet", "matplotlib", "numpy", "pandas", "xdas"]
 
 [project.optional-dependencies]
 dev = ["black", "isort", "pytest"]
