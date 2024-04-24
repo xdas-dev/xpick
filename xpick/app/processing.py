@@ -8,14 +8,26 @@ def load_signal(selection):
     # load
     signal = db.sel(
         time=slice(
-            selection["starttime"].value,
-            selection["endtime"].value,
+            (
+                None
+                if (starttime := selection["starttime"].value.strip()) == ""
+                else starttime
+            ),
+            None if (endtime := selection["endtime"].value.strip()) == "" else endtime,
         ),
         distance=slice(
-            float(selection["startdistance"].value),
-            float(selection["enddistance"].value),
+            (
+                None
+                if (startdistance := selection["startdistance"].value.strip()) == ""
+                else float(startdistance)
+            ),
+            (
+                None
+                if (enddistance := selection["enddistance"].value.strip()) == ""
+                else float(enddistance)
+            ),
         ),
-    ).to_xarray()
+    ).load()
     return signal
 
 
