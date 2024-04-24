@@ -92,7 +92,7 @@ fig.add_tools(PickerTool(source=source_picks, phase=phase))
 # widgets
 
 selection = {
-    "database": Select(title="Database", value=paths[0], options=paths, width=330),
+    "dataarray": Select(title="Data Array", value=paths[0], options=paths, width=330),
     "starttime": TextInput(title="Start", value="2021-11-13T01:41:00", width=160),
     "endtime": TextInput(title="End", value="2021-11-13T01:41:10", width=160),
     "startdistance": TextInput(title="Start", value="20_000.0", width=160),
@@ -371,7 +371,7 @@ doc.add_root(
         fig,
         column(
             Div(text="<h2 style='margin: 0'>Selection & Processing</h2>"),
-            selection["database"],
+            selection["dataarray"],
             row(
                 column(
                     Div(text="<h3 style='margin: 0'>Time</h3>"),

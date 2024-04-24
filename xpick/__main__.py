@@ -14,7 +14,7 @@ def main():
         --show)
         """
     )
-    parser.add_argument("paths", nargs="+", help="Path of the database to explore.")
+    parser.add_argument("paths", nargs="+", help="Path of the data array to explore.")
     parser.add_argument(
         "--width", help="Width of the image in pixels.", type=int, default=1080
     )
