@@ -35,14 +35,19 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--paths", nargs="+")
 parser.add_argument("--width", type=int)
 parser.add_argument("--height", type=int)
+parser.add_argument("--phases", type=str)
+parser.add_argument("--colors", type=str)
 args = parser.parse_args()
 
 
 # global constants
 
 palette_mapping = ["Viridis256", cc.CET_D1A]
-phase_labels = ["Pp", "Ps", "Ss"]
-phase_colors = ["#7F0DFF", "#BF0DFF", "#FF00FF"]
+phase_labels = args.phases.split(",")  # ["Pp", "Ps", "Ss"]
+phase_colors = args.colors.split(",")  # ["#7F0DFF", "#BF0DFF", "#FF00FF"]
+if len(phase_labels) != len(phase_colors):
+    print("Phase labels number do no match phase colors. Using default value instead.")
+    phase_colors = ["#FF0000"] * len(phase_labels)
 phase_cmap = factor_cmap(field_name="phase", palette=phase_colors, factors=phase_labels)
 
 

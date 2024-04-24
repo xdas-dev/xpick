@@ -21,6 +21,15 @@ def main():
     parser.add_argument(
         "--height", help="Height of the image in pixels.", type=int, default=720
     )
+    parser.add_argument(
+        "--phases", help="List of phases to pick e.g., 'P,S'.", type=str, default="P,S"
+    )
+    parser.add_argument(
+        "--colors",
+        help="List of colors to pick e.g., '#7F0DFF,#FF00FF'.",
+        type=str,
+        default="",
+    )
     args, remaining_args = parser.parse_known_args()
     cmd = ["bokeh", "serve", path]
     extra = []
