@@ -4,7 +4,14 @@ from matplotlib.colors import SymLogNorm
 
 
 def load_signal(selection):
-    db = xdas.open_dataarray(selection["dataarray"].value)
+    if path := selection["datacollection"]:
+        code = selection["dataarray"].value
+        db = xdas.open_datacollection(path)
+        for key in code.split("."):
+            db = db[key]
+    else:
+        path = selection["dataarray"].value
+        db = xdas.open_dataarray(path)
     # load
     signal = db.sel(
         time=slice(
@@ -28,6 +35,11 @@ def load_signal(selection):
             ),
         ),
     ).load()
+    if isinstance(signal, xdas.DataSequence):
+        if len(signal) > 1:
+            raise ValueError("Data collection must contain only one data array.")
+        else:
+            signal = signal[0]
     return signal
 
 

@@ -22,12 +22,14 @@ from bokeh.models import (
     Slider,
     TextInput,
     Toggle,
+    Widget,
 )
 from bokeh.plotting import curdoc, figure
 from bokeh.transform import factor_cmap
 
 from xpick.app.pickertool import PickerTool
 from xpick.app.processing import load_signal, normalize_signal, process_signal
+from xpick.app.utils import check_paths, get_codes
 
 # parse arguments
 
@@ -57,6 +59,9 @@ phase_cmap = factor_cmap(field_name="phase", palette=phase_colors, factors=phase
 # global variables
 
 paths = args.paths
+is_datacollection = check_paths(paths)
+if is_datacollection:
+    codes = get_codes(xdas.open_datacollection(paths[0]))
 x_range = Range1d()
 y_range = Range1d()
 source_image = ColumnDataSource(data=dict(image=[], x=[], y=[], dw=[], dh=[]))
@@ -99,11 +104,17 @@ fig.add_tools(PickerTool(source=source_picks, phase=phase))
 # widgets
 
 selection = {
-    "dataarray": Select(title="Data Array", value=paths[0], options=paths, width=330),
+    "dataarray": Select(
+        title="Data Array",
+        value=codes[0] if is_datacollection else paths[0],
+        options=codes if is_datacollection else paths,
+        width=330,
+    ),
     "starttime": TextInput(title="Start", value="", width=160),
     "endtime": TextInput(title="End", value="", width=160),
     "startdistance": TextInput(title="Start", value="", width=160),
     "enddistance": TextInput(title="End", value="", width=160),
+    "datacollection": paths[0] if is_datacollection else None,
 }
 processing = {
     "space": {
@@ -149,18 +160,19 @@ changes = {
 }
 
 for widget in selection.values():
-    widget.on_change(
-        "value",
-        lambda attr, old, new: changes.update(
-            {
-                "load_signal": True,
-                "process_signal": True,
-                "normalize_signal": True,
-                "update_image": True,
-                "update_range": True,
-            }
-        ),
-    )
+    if isinstance(widget, Widget):
+        widget.on_change(
+            "value",
+            lambda attr, old, new: changes.update(
+                {
+                    "load_signal": True,
+                    "process_signal": True,
+                    "normalize_signal": True,
+                    "update_image": True,
+                    "update_range": True,
+                }
+            ),
+        )
 for dim in processing:
     for widget in processing[dim].values():
         if hasattr(widget, "active"):
