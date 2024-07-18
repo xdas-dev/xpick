@@ -120,12 +120,12 @@ selection = {
 processing = {
     "space": {
         "integration": Toggle(label="Integrate", width=160),
-        "decimation": TextInput(title="Decimate", value="16", width=75),
+        "decimation": TextInput(title="Decimate", value="", width=75),
         "highpass": TextInput(title="Highpass", value="", width=75),
     },
     "time": {
         "integration": Toggle(label="Integrate", width=160),
-        "decimation": TextInput(title="Decimate", value="4", width=75),
+        "decimation": TextInput(title="Decimate", value="", width=75),
         "highpass": TextInput(title="Highpass", value="", width=75),
     },
 }
