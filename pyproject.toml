@@ -8,8 +8,15 @@ version = "0.1.0"
 authors = [
     { name = "Alister Trabattoni", email = "alister.trabattoni@gmail.com" },
 ]
-requires-python = ">= 3.9"
-dependencies = ["bokeh==3.4.2", "colorcet", "matplotlib", "numpy", "pandas", "xdas"]
+requires-python = ">=3.9"
+dependencies = [
+    "bokeh==3.4.2",
+    "colorcet",
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "xdas>=0.1",
+]
 
 [project.optional-dependencies]
 dev = ["black", "isort", "pytest"]
