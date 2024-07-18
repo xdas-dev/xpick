@@ -131,8 +131,8 @@ processing = {
 }
 mapper = {
     "palette": RadioButtonGroup(labels=["viridis", "seismic"], active=0, width=330),
-    "linthresh": TextInput(title="Linear Threshold", value="1e-8", width=160),
-    "vlim": TextInput(title="Value Limit", value="1e-5", width=160),
+    "linthresh": TextInput(title="Linear Threshold", value="", width=160),
+    "vlim": TextInput(title="Value Limit", value="", width=160),
 }
 b_apply = Button(label="apply", button_type="success", width=160)
 b_home = Button(label="home", button_type="primary", width=160)

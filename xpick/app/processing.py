@@ -1,3 +1,4 @@
+import numpy as np
 import xdas
 import xdas.signal as xp
 from matplotlib.colors import SymLogNorm
@@ -60,16 +61,26 @@ def process_signal(signal, processing):
         signal = xp.decimate(signal, int(q), ftype="iir", zero_phase=False, dim="time")
     if freq := processing["time"]["highpass"].value:
         signal = xp.filter(signal, freq=float(freq), btype="highpass", dim="time")
-    # gain
-    signal *= 1.08e-7
     return signal
 
 
 def normalize_signal(signal, mapper):
+    vlim = (
+        float(mapper["vlim"].value)
+        if mapper["vlim"].value
+        else np.max(np.abs(signal.values))
+    )
+    factor = 10 ** np.floor(np.log10(abs(vlim)))
+    vlim = np.ceil(vlim / factor) * factor
+    mapper["vlim"].value = str(vlim)
+    linthresh = (
+        float(mapper["linthresh"].value) if mapper["linthresh"].value else vlim / 10
+    )
+    mapper["linthresh"].value = str(linthresh)
     norm = SymLogNorm(
-        linthresh=float(mapper["linthresh"].value),
-        vmin=-float(mapper["vlim"].value),
-        vmax=float(mapper["vlim"].value),
+        linthresh=linthresh,
+        vmin=-vlim,
+        vmax=vlim,
     )
     image = signal.copy(data=norm(signal.values).data)
     return image
