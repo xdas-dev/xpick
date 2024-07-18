@@ -8,7 +8,7 @@ version = "0.1.0"
 authors = [
     { name = "Alister Trabattoni", email = "alister.trabattoni@gmail.com" },
 ]
-dependencies = ["bokeh", "colorcet", "matplotlib", "numpy", "pandas", "xdas"]
+dependencies = ["bokeh==3.4.2", "colorcet", "matplotlib", "numpy", "pandas", "xdas"]
 
 [project.optional-dependencies]
 dev = ["black", "isort", "pytest"]
@@ -21,4 +21,3 @@ xpick = "xpick.__main__:main"
 
 [tool.isort]
 profile = "black"
-
