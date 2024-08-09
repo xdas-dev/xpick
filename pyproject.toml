@@ -15,7 +15,7 @@ dependencies = [
     "matplotlib",
     "numpy",
     "pandas",
-    "xdas>=0.1",
+    "xdas>=0.1.1",
 ]
 
 [project.optional-dependencies]

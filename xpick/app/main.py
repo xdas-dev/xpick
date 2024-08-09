@@ -1,7 +1,6 @@
 import argparse
 
 import colorcet as cc
-import netCDF4  # fix bug for some reason
 import numpy as np
 import pandas as pd
 import xdas
