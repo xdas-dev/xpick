@@ -12,7 +12,7 @@
 Bokeh apps require nodejs that can be installed with conda:
 
 ```
-conda install nodejs
+conda install "nodejs>=18"
 ```
 
 Then xpick can be installed from github:
